@@ -1,0 +1,478 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            width: 100vw;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: #000;
+            perspective: 1000px;
+            overflow: hidden;
+            position: fixed;
+        }
+
+        .iphone {
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            overflow: hidden;
+            transform-style: preserve-3d;
+            transition: transform 0.5s ease;
+        }
+
+        .lockscreen {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            background: url('./wallpaper.png') center/cover;
+            transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .lockscreen::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(180deg, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 100%);
+            backdrop-filter: blur(2px);
+        }
+
+        .notch {
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 180px;
+            height: 30px;
+            background: #000;
+            border-bottom-left-radius: 15px;
+            border-bottom-right-radius: 15px;
+            z-index: 2;
+        }
+
+        .time {
+            position: absolute;
+            top: 70px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 80px;
+            font-weight: 300;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeInDown 1s forwards 0.5s;
+        }
+
+        .date {
+            position: absolute;
+            top: 160px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeInDown 1s forwards 0.7s;
+        }
+
+        .romantic-message {
+            position: absolute;
+            top: 200px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 18px;
+            padding: 20px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: fadeInDown 1s forwards 0.9s;
+        }
+
+        .unlock-indicator {
+            position: absolute;
+            bottom: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 5px;
+            background: #fff;
+            border-radius: 3px;
+            box-shadow: 0 0 10px rgba(255,255,255,0.5);
+            animation: pulse 2s infinite;
+        }
+
+        .slide-text {
+            position: absolute;
+            bottom: 50px;
+            width: 100%;
+            text-align: center;
+            color: #fff;
+            font-size: 16px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .hearts-container {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+        }
+
+        .heart {
+            position: absolute;
+            color: #ff4d7c;
+            font-size: 20px;
+            animation: floatHeart 4s linear infinite;
+            opacity: 0;
+        }
+
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.9);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            opacity: 0;
+            transition: opacity 0.5s ease;
+        }
+
+        .modal.active {
+            opacity: 1;
+        }
+
+        .modal-content {
+            position: relative;
+            width: 90%;
+            max-width: 500px;
+            background: #fff;
+            padding: 20px;
+            border-radius: 20px;
+            transform: scale(0.7);
+            transition: transform 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .modal.active .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-image {
+            width: 100%;
+            border-radius: 15px;
+            transition: transform 0.3s ease;
+        }
+
+        .modal-image:hover {
+            transform: scale(1.02);
+        }
+
+        .close {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            color: #fff;
+            font-size: 30px;
+            cursor: pointer;
+            transition: transform 0.3s ease;
+        }
+
+        .close:hover {
+            transform: rotate(90deg);
+        }
+
+        .romantic-caption {
+            text-align: center;
+            margin-top: 15px;
+            color: #333;
+            font-size: 16px;
+            font-style: italic;
+        }
+
+        .sparkle {
+            position: absolute;
+            width: 4px;
+            height: 4px;
+            background: #fff;
+            border-radius: 50%;
+            pointer-events: none;
+            animation: sparkle 1.5s linear infinite;
+        }
+
+        @keyframes fadeInDown {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulse {
+            0% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+            50% { transform: translateX(-50%) scale(1.2); opacity: 1; }
+            100% { transform: translateX(-50%) scale(1); opacity: 0.5; }
+        }
+
+        @keyframes floatHeart {
+            0% {
+                transform: translateY(100vh) scale(0);
+                opacity: 0;
+            }
+            50% {
+                opacity: 0.8;
+            }
+            100% {
+                transform: translateY(-100px) scale(1);
+                opacity: 0;
+            }
+        }
+
+        @keyframes sparkle {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1); opacity: 1; }
+            100% { transform: scale(0); opacity: 0; }
+        }
+    </style>
+</head>
+<body>
+    <div class="iphone">
+        <div class="lockscreen">
+            <div class="notch"></div>
+            <div class="hearts-container"></div>
+            <div class="time"></div>
+            <div class="date"></div>
+            <div class="romantic-message"></div>
+            <div class="unlock-indicator"></div>
+            <div class="slide-text">Geser ke atas untuk membuka</div>
+        </div>
+    </div>
+
+    <div class="modal">
+        <span class="close">&times;</span>
+        <div class="modal-content">
+            <img src="./foto.png" alt="Special Photo" class="modal-image">
+            <p class="romantic-caption">Kamu adalah alasan senyumku hari ini ❤️</p>
+        </div>
+    </div>
+
+    <script>
+        // Pesan romantis yang akan ditampilkan secara bergantian
+        const romanticMessages = [
+            "Setiap detik bersamamu adalah hadiah terindah 💝",
+            "Kamu membuat hidupku lebih berwarna 🌈",
+            "Senyummu adalah kebahagiaan terbesarku ✨",
+            "Bersamamu, setiap hari terasa istimewa 💫"
+        ];
+
+        // Function to request fullscreen
+        function requestFullscreen() {
+            const element = document.documentElement;
+            
+            if (element.requestFullscreen) {
+                element.requestFullscreen();
+            } else if (element.webkitRequestFullscreen) {
+                element.webkitRequestFullscreen();
+            } else if (element.msRequestFullscreen) {
+                element.msRequestFullscreen();
+            }
+        }
+
+        // Function to lock screen orientation to portrait
+        async function lockOrientation() {
+            try {
+                if (screen.orientation && screen.orientation.lock) {
+                    await screen.orientation.lock('portrait');
+                }
+            } catch (e) {
+                console.log('Orientation lock failed:', e);
+            }
+        }
+
+        // Update time and date
+        function updateTime() {
+            const now = new Date();
+            const timeElement = document.querySelector('.time');
+            const dateElement = document.querySelector('.date');
+            
+            const hours = now.getHours().toString().padStart(2, '0');
+            const minutes = now.getMinutes().toString().padStart(2, '0');
+            timeElement.textContent = `${hours}:${minutes}`;
+            
+            const options = { weekday: 'long', month: 'long', day: 'numeric' };
+            dateElement.textContent = now.toLocaleDateString('id-ID', options);
+        }
+
+        // Rotating romantic messages
+        let currentMessageIndex = 0;
+        function updateRomanticMessage() {
+            const messageElement = document.querySelector('.romantic-message');
+            messageElement.style.opacity = '0';
+            
+            setTimeout(() => {
+                messageElement.textContent = romanticMessages[currentMessageIndex];
+                messageElement.style.opacity = '1';
+                currentMessageIndex = (currentMessageIndex + 1) % romanticMessages.length;
+            }, 500);
+        }
+
+        // Create floating hearts
+        function createHeart() {
+            const heart = document.createElement('div');
+            heart.className = 'heart';
+            heart.innerHTML = '❤️';
+            heart.style.left = Math.random() * 100 + '%';
+            heart.style.animationDelay = Math.random() * 4 + 's';
+            document.querySelector('.hearts-container').appendChild(heart);
+
+            setTimeout(() => {
+                heart.remove();
+            }, 4000);
+        }
+
+        // Create sparkle effect
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            document.body.appendChild(sparkle);
+
+            setTimeout(() => {
+                sparkle.remove();
+            }, 1500);
+        }
+
+        // Initialize everything
+        document.addEventListener('DOMContentLoaded', () => {
+            // Add click/touch event listener to request fullscreen
+            document.addEventListener('click', requestFullscreen, { once: true });
+            document.addEventListener('touchstart', requestFullscreen, { once: true });
+            
+            // Lock orientation
+            lockOrientation();
+            
+            // Initialize previous functionality
+            updateTime();
+            setInterval(updateTime, 1000);
+            updateRomanticMessage();
+            setInterval(updateRomanticMessage, 5000);
+            setInterval(createHeart, 2000);
+        });
+
+        // Sliding functionality
+        const lockscreen = document.querySelector('.lockscreen');
+        const modal = document.querySelector('.modal');
+        const closeBtn = document.querySelector('.close');
+
+        let startY = 0;
+        let currentY = 0;
+
+        lockscreen.addEventListener('touchstart', (e) => {
+            startY = e.touches[0].clientY;
+        });
+
+        lockscreen.addEventListener('touchmove', (e) => {
+            currentY = e.touches[0].clientY;
+            const diff = startY - currentY;
+            
+            if (diff > 0) {
+                lockscreen.style.transform = `translateY(-${diff}px)`;
+                createSparkle(e.touches[0].clientX, e.touches[0].clientY);
+            }
+        });
+
+        lockscreen.addEventListener('touchend', (e) => {
+            const diff = startY - currentY;
+            
+            if (diff > 150) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+            }
+            
+            lockscreen.style.transform = 'translateY(0)';
+        });
+
+        // Modal functionality
+        closeBtn.addEventListener('click', () => {
+            modal.classList.remove('active');
+            setTimeout(() => {
+                modal.style.display = 'none';
+            }, 500);
+        });
+
+        modal.addEventListener('click', (e) => {
+            if (e.target === modal) {
+                modal.classList.remove('active');
+                setTimeout(() => {
+                    modal.style.display = 'none';
+                }, 500);
+            }
+        });
+
+        // Mouse slide simulation for desktop
+        let isMouseDown = false;
+
+        lockscreen.addEventListener('mousedown', (e) => {
+            isMouseDown = true;
+            startY = e.clientY;
+        });
+
+        lockscreen.addEventListener('mousemove', (e) => {
+            if (!isMouseDown) return;
+            
+            currentY = e.clientY;
+            const diff = startY - currentY;
+            
+            if (diff > 0) {
+                lockscreen.style.transform = `translateY(-${diff}px)`;
+                createSparkle(e.clientX, e.clientY);
+            }
+        });
+
+        lockscreen.addEventListener('mouseup', () => {
+            if (!isMouseDown) return;
+            
+            const diff = startY - currentY;
+            
+            if (diff > 150) {
+                modal.style.display = 'flex';
+                setTimeout(() => {
+                    modal.classList.add('active');
+                }, 10);
+            }
+            
+            lockscreen.style.transform = 'translateY(0)';
+            isMouseDown = false;
+        });
+
+        // Prevent text selection during slide
+        lockscreen.addEventListener('selectstart', (e) => e.preventDefault());
+    </script>
+</body>
+</html>
